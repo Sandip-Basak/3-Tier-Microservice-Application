@@ -1,0 +1,55 @@
+# =========================================================================
+# Local .terraform directories
+# =========================================================================
+# Contains downloaded provider plugins and modules. Regenerated via 'terraform init'.
+.terraform/
+
+# =========================================================================
+# Terraform State Files
+# =========================================================================
+# Contains infrastructure secrets and state tracking. 
+# Must be kept out of version control and stored in a secure remote backend instead.
+*.tfstate
+*.tfstate.*
+
+# Ignore transient lock files created during 'terraform apply'
+.terraform.tfstate.lock.info
+.terraform.lock.hcl
+
+# =========================================================================
+# Variables and Secrets
+# =========================================================================
+# Exclude files containing sensitive data like API keys, passwords, and tokens.
+*.tfvars
+*.tfvars.json
+
+# Exclude automatically loaded variables that might hold environment-specific secrets
+*.auto.tfvars
+*.auto.tfvars.json
+
+# =========================================================================
+# Configuration Overrides
+# =========================================================================
+# Exclude local override files used to temporarily modify resources locally
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# =========================================================================
+# Command Logs & CLI Configuration
+# =========================================================================
+# Crash logs
+crash.log
+crash.*.log
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# =========================================================================
+# Execution Plans (Optional)
+# =========================================================================
+# Execution plans from 'terraform plan -out=tfplan' can contain sensitive data.
+# Uncomment the line below if you generate binary plan files.
+# *tfplan*

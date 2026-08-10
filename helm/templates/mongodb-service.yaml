@@ -1,0 +1,17 @@
+{{- if .Values.mongodb.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.mongodb.service.name }}
+  labels:
+    app.kubernetes.io/component: mongodb
+    {{- include "food-delivery.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.mongodb.service.type }}
+  ports:
+    - port: {{ .Values.mongodb.service.port }}
+      targetPort: {{ .Values.mongodb.service.port }}
+      name: mongodb
+  selector:
+    app: mongodb
+{{- end }}

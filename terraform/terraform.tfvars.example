@@ -1,0 +1,18 @@
+# AWS Region configuration
+aws_region   = "us-east-1"
+environment  = "dev"
+project_name = "food-delivery-3tier"
+
+# Network configuration
+vpc_cidr           = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# EKS Cluster configuration
+eks_cluster_name    = "food-delivery-eks"
+eks_cluster_version = "1.30"
+
+# Node Group configuration
+node_group_instance_types = ["t3.medium"]
+node_group_desired_size   = 2
+node_group_min_size       = 2
+node_group_max_size       = 4

@@ -1,0 +1,14 @@
+{{- if and .Values.mongodb.enabled .Values.mongodb.persistence.enabled }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.mongodb.persistence.storageClass | default "gp3" }}
+  labels:
+    {{- include "food-delivery.labels" . | nindent 4 }}
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+parameters:
+  type: {{ .Values.mongodb.persistence.storageClass | default "gp3" }}
+{{- end }}

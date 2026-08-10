@@ -1,0 +1,75 @@
+{{- if and .Values.mongodb.enabled .Values.aws.ebsCsiIrsaRoleArn }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ebs-csi-annotator-sa
+  labels:
+    {{- include "food-delivery.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ebs-csi-annotator-role
+  labels:
+    {{- include "food-delivery.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+rules:
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
+    verbs: ["get", "patch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "patch", "update", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ebs-csi-annotator-binding
+  labels:
+    {{- include "food-delivery.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ebs-csi-annotator-role
+subjects:
+  - kind: ServiceAccount
+    name: ebs-csi-annotator-sa
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ebs-csi-annotator-job
+  labels:
+    {{- include "food-delivery.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      name: ebs-csi-annotator
+    spec:
+      serviceAccountName: ebs-csi-annotator-sa
+      restartPolicy: OnFailure
+      containers:
+        - name: kubectl
+          image: bitnami/kubectl:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Annotating ebs-csi-controller-sa in kube-system with IRSA Role..."
+              kubectl annotate sa ebs-csi-controller-sa -n kube-system eks.amazonaws.com/role-arn={{ .Values.aws.ebsCsiIrsaRoleArn }} --overwrite
+              echo "Restarting ebs-csi-controller deployment in kube-system..."
+              kubectl rollout restart deployment ebs-csi-controller -n kube-system
+{{- end }}

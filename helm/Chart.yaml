@@ -1,0 +1,6 @@
+apiVersion: v2
+name: food-delivery
+description: Helm chart for deploying 3-Tier Food Delivery Microservice Application on AWS EKS
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

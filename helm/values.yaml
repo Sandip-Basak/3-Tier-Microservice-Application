@@ -1,0 +1,159 @@
+# AWS Infrastructure Configuration
+aws:
+  region: "us-east-1"
+  accountId: "<ACCOUNT_ID>"
+  ebsCsiIrsaRoleArn: "arn:aws:iam::<ACCOUNT_ID>:role/food-delivery-3tier-ebs-csi-irsa-role"
+
+
+# MongoDB Database Configuration
+mongodb:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: "mongo"
+    tag: "6.0"
+    pullPolicy: "IfNotPresent"
+  service:
+    type: "ClusterIP"
+    name: "mongodb-service"
+    port: 27017
+  persistence:
+    enabled: true
+    size: "5Gi"
+    storageClass: "gp3" # EKS AWS EBS CSI driver storage class (gp3)
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  probes:
+    liveness:
+      tcpSocket:
+        port: 27017
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+    readiness:
+      tcpSocket:
+        port: 27017
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+
+# Backend REST API Configuration
+backend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: "<ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/food-delivery/backend"
+    tag: "latest"
+    pullPolicy: "Always"
+  service:
+    type: "LoadBalancer"
+    port: 4000
+    targetPort: 4000
+  serviceAccount:
+    create: true
+    name: "backend-sa"
+    irsaRoleArn: "arn:aws:iam::<ACCOUNT_ID>:role/food-delivery-3tier-backend-irsa-role"
+  env:
+    mongoUri: "mongodb://mongodb-service:27017/food-del"
+    port: "4000"
+    frontendUrl: "http://localhost:5173"
+    jwtSecret: "YOUR_JWT_SECRET"
+    s3BucketName: "YOUR_BUCKET_NAME"
+    awsRegion: "us-east-1"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
+  probes:
+    liveness:
+      httpGet:
+        path: "/"
+        port: 4000
+      initialDelaySeconds: 20
+      periodSeconds: 10
+      timeoutSeconds: 5
+    readiness:
+      httpGet:
+        path: "/"
+        port: 4000
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+
+# Frontend Customer Web Application Configuration
+frontend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: "<ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/food-delivery/frontend"
+    tag: "latest"
+    pullPolicy: "Always"
+  service:
+    type: "LoadBalancer"
+    port: 80
+    targetPort: 80
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "250m"
+      memory: "128Mi"
+  probes:
+    liveness:
+      httpGet:
+        path: "/"
+        port: 80
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+    readiness:
+      httpGet:
+        path: "/"
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3
+
+# Admin Dashboard Configuration
+admin:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: "<ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/food-delivery/admin"
+    tag: "latest"
+    pullPolicy: "Always"
+  service:
+    type: "LoadBalancer"
+    port: 80
+    targetPort: 80
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "250m"
+      memory: "128Mi"
+  probes:
+    liveness:
+      httpGet:
+        path: "/"
+        port: 80
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+    readiness:
+      httpGet:
+        path: "/"
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3

@@ -1,0 +1,36 @@
+{{- if .Values.admin.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-app
+  labels:
+    app.kubernetes.io/component: admin
+    {{- include "food-delivery.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.admin.replicaCount }}
+  selector:
+    matchLabels:
+      app: admin
+  template:
+    metadata:
+      labels:
+        app: admin
+    spec:
+      containers:
+        - name: admin
+          image: {{ .Values.admin.image.repository }}:{{ .Values.admin.image.tag }}
+          imagePullPolicy: {{ .Values.admin.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.admin.service.targetPort }}
+              name: http
+          {{- if .Values.admin.probes }}
+          livenessProbe:
+            {{- toYaml .Values.admin.probes.liveness | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.admin.probes.readiness | nindent 12 }}
+          {{- end }}
+          {{- if .Values.admin.resources }}
+          resources:
+            {{- toYaml .Values.admin.resources | nindent 12 }}
+          {{- end }}
+{{- end }}

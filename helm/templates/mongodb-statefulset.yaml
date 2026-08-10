@@ -1,0 +1,48 @@
+{{- if .Values.mongodb.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  labels:
+    app.kubernetes.io/component: mongodb
+    {{- include "food-delivery.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ .Values.mongodb.service.name | quote }}
+  replicas: {{ .Values.mongodb.replicaCount }}
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: "{{ .Values.mongodb.image.repository }}:{{ .Values.mongodb.image.tag }}"
+          imagePullPolicy: {{ .Values.mongodb.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.mongodb.service.port }}
+              name: mongodb
+          {{- if .Values.mongodb.probes }}
+          livenessProbe:
+            {{- toYaml .Values.mongodb.probes.liveness | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.mongodb.probes.readiness | nindent 12 }}
+          {{- end }}
+          {{- if .Values.mongodb.resources }}
+          resources:
+            {{- toYaml .Values.mongodb.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: mongodb-data
+              mountPath: /data/db
+      volumes:
+        - name: mongodb-data
+          {{- if .Values.mongodb.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: mongodb-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+{{- end }}

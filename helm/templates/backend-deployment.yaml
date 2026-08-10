@@ -1,0 +1,52 @@
+{{- if .Values.backend.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-app
+  labels:
+    app.kubernetes.io/component: backend
+    {{- include "food-delivery.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      {{- if .Values.backend.serviceAccount.create }}
+      serviceAccountName: {{ .Values.backend.serviceAccount.name }}
+      {{- end }}
+      containers:
+        - name: backend
+          image: {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.backend.service.targetPort }}
+              name: http
+          {{- if .Values.backend.probes }}
+          livenessProbe:
+            {{- toYaml .Values.backend.probes.liveness | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.backend.probes.readiness | nindent 12 }}
+          {{- end }}
+          {{- if .Values.backend.resources }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          {{- end }}
+          env:
+            - name: MONGO_URI
+              value: {{ .Values.backend.env.mongoUri | quote }}
+            - name: PORT
+              value: {{ .Values.backend.env.port | quote }}
+            - name: FRONTEND_URL
+              value: {{ .Values.backend.env.frontendUrl | quote }}
+            - name: JWT_SECRET
+              value: {{ .Values.backend.env.jwtSecret | quote }}
+            - name: AWS_S3_BUCKET_NAME
+              value: {{ .Values.backend.env.s3BucketName | quote }}
+            - name: AWS_REGION
+              value: {{ .Values.backend.env.awsRegion | quote }}
+{{- end }}
